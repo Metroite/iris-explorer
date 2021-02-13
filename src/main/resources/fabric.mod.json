@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "iris-explorer",
+  "version": "${version}",
+
+  "name": "Iris Explorer",
+  "description": "Shaderpack Explorer for Iris",
+  "authors": [
+    "Metroite"
+  ],
+  "contact": {
+    "homepage": "https://metroite.de/",
+    "sources": "https://github.com/Metroite/iris-explorer"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "Discord": "https://discord.gg/vBgb85N"
+      },
+      "parent": {
+        "id": "iris"
+      }
+    }
+  },
+
+  "license": "LGPL-3.0",
+  "icon": "assets/iris-explorer/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "modmenu": [
+      "de.metroite.irisexplorer.config.ModMenuIntegration"
+    ],
+    "client": [
+      "de.metroite.irisexplorer.IrisExplorerMod"
+    ]
+  },
+  "mixins": [
+    "iris-explorer.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.x",
+    "iris": "*"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "respackopts": "*"
+  }
+}
