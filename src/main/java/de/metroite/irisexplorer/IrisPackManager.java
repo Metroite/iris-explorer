@@ -1,5 +1,7 @@
 package de.metroite.irisexplorer;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
@@ -9,28 +11,32 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 public class IrisPackManager {
     private static final Path shaderpacksDirectory = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
     private static final Path irisConfig = FabricLoader.getInstance().getConfigDir().resolve("iris.properties");
     public static final String PACKID = "iris";
+    public static final Object2IntMap<String> RESOURCE_PACK_PRIORITY_MAP = new Object2IntOpenHashMap<>();
 
 
-    static String[] getShaderpackPaths() {
-        String[] pathnames;
-        File f = new File(shaderpacksDirectory + "");
-        pathnames = f.list();
+    public static List<String> getShaderpackPaths() {
+        List<String> pathnames;
+        File f = new File(shaderpacksDirectory.toString());
+        pathnames = Arrays.asList(Objects.requireNonNull(f.list()));
         return pathnames;
     }
 
     public static String getShaderpack() {
-        String[] packs = getShaderpackPaths();
+        List<String> packs = getShaderpackPaths();
         int priority = -1;
         int currentPriority;
         String returnPack = "(internal)";
         for (String pack: packs) {
-            currentPriority = IrisExplorerMod.RESOURCE_PACK_PRIORITY_MAP.getInt(PACKID + "/" + getPackSubID(pack));
+            currentPriority = RESOURCE_PACK_PRIORITY_MAP.getInt(PACKID + "/" + getPackSubID(pack));
             //if any higher priority shaderpack was found, switch to it
             if (currentPriority > priority) {
                 returnPack = pack;
@@ -57,9 +63,8 @@ public class IrisPackManager {
     }
 
     public  static void updateShaderpackList() {
-        String[] packs = getShaderpackPaths();
-        for (String pack:
-             packs) {
+        List<String> packs = getShaderpackPaths();
+        for (String pack: packs) {
             createResourcepack(pack);
         }
     }
@@ -75,4 +80,7 @@ public class IrisPackManager {
         return pack.toLowerCase().replaceAll("\\s+", "-");
     }
 
+    static {
+        RESOURCE_PACK_PRIORITY_MAP.defaultReturnValue(-1);
+    }
 }

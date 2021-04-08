@@ -10,6 +10,7 @@
   ],
   "contact": {
     "homepage": "https://metroite.de/",
+    "issues": "https://github.com/Metroite/iris-explorer/issues",
     "sources": "https://github.com/Metroite/iris-explorer"
   },
   "custom": {
@@ -27,14 +28,6 @@
   "icon": "assets/iris-explorer/icon.png",
 
   "environment": "client",
-  "entrypoints": {
-    "modmenu": [
-      "de.metroite.irisexplorer.config.ModMenuIntegration"
-    ],
-    "client": [
-      "de.metroite.irisexplorer.IrisExplorerMod"
-    ]
-  },
   "mixins": [
     "iris-explorer.mixins.json"
   ],
@@ -44,9 +37,5 @@
     "fabric": "*",
     "minecraft": "1.16.x",
     "iris": "*"
-  },
-  "suggests": {
-    "modmenu": "*",
-    "respackopts": "*"
   }
 }
