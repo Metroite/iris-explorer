@@ -15,5 +15,11 @@ This mod depends on [Iris](https://github.com/IrisShaders/Iris)!
 
 <img src="https://thumbs.gfycat.com/SilkyWindyAlligatorgar-size_restricted.gif"></img>
 
+## Installation
+
+To be able to use this mod with Sodium, you'll need to compile the [compatibility branch of Iris for Sodium](https://github.com/IrisShaders/sodium-fabric "Iris sodium-compatibility") and the [Sodium fork by IrisShaders](https://github.com/IrisShaders/Iris/tree/sodium-compatibility "Sodium fork by IrisShaders").
+
+Just clone or download the source code on github and run `./gradlew build` inside their project. The Sodium fork by IrisShaders requires the Iris.jar in the project folder `/build/loom-cache`, so make sure to compile Iris first and move/copy the jar to that path.
+
 ## Author
 [Metroite](https://www.metroite.de)
