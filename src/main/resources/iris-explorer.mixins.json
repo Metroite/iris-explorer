@@ -6,8 +6,7 @@
   "mixins": [
   ],
   "client": [
-    "ReloadableResourceManagerImplMixin",
-    "PackScreenMixin"
+    "ResourcePackOrganizerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

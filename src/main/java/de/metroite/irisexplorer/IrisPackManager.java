@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resource.ResourcePackProfile;
 import net.minecraft.util.Identifier;
 
 import java.io.File;
@@ -21,6 +22,17 @@ public class IrisPackManager {
     private static final Path irisConfig = FabricLoader.getInstance().getConfigDir().resolve("iris.properties");
     public static final String PACKID = "iris";
     public static final Object2IntMap<String> RESOURCE_PACK_PRIORITY_MAP = new Object2IntOpenHashMap<>();
+    //Used in Mixin to retain resourcepack/shaderpack layout
+    public static List<ResourcePackProfile> enabledPacks = null;
+
+    public static List<ResourcePackProfile> getEnabledPacks() {
+        return enabledPacks;
+    }
+
+    public static void setEnabledPacks(List<ResourcePackProfile> enabledPacks) {
+        IrisPackManager.enabledPacks = enabledPacks;
+    }
+
 
 
     public static List<String> getShaderpackPaths() {
@@ -34,7 +46,7 @@ public class IrisPackManager {
         List<String> packs = getShaderpackPaths();
         int priority = -1;
         int currentPriority;
-        String returnPack = "(internal)";
+        String returnPack = getCurrentShaderpack();
         for (String pack: packs) {
             currentPriority = RESOURCE_PACK_PRIORITY_MAP.getInt(PACKID + "/" + getPackSubID(pack));
             //if any higher priority shaderpack was found, switch to it
@@ -44,6 +56,21 @@ public class IrisPackManager {
             }
         }
         return returnPack;
+    }
+
+    private static String getCurrentShaderpack() {
+        String prop = "(internal)";
+        try {
+            FileInputStream in = new FileInputStream(irisConfig.toString());
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            prop = props.getProperty("shaderPack");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return prop;
     }
 
     public static void setShaderpack(String pack) {

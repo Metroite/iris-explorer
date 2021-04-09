@@ -9,12 +9,9 @@ import java.io.IOException;
 public class IrisExplorerMod {
     public static final String MODID = "iris-explorer";
     public static final Logger LOGGER = LogManager.getLogger("iris-explorer");
-    public static String SHADER = "(internal)";
 
     public static void reload() {
-        IrisExplorerMod.SHADER = IrisPackManager.getShaderpack();
-        IrisPackManager.setShaderpack(IrisExplorerMod.SHADER);
-        IrisExplorerMod.LOGGER.info("Shaderpack list updated! Current shaderpack: " + IrisExplorerMod.SHADER);
+        IrisPackManager.setShaderpack(IrisPackManager.getShaderpack());
 
         // Reload Iris' Engine
         try {
