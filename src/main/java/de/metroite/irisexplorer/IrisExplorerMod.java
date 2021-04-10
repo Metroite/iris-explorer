@@ -11,7 +11,7 @@ public class IrisExplorerMod {
     public static final Logger LOGGER = LogManager.getLogger("iris-explorer");
 
     public static void reload() {
-        IrisPackManager.setShaderpack(IrisPackManager.getShaderpack());
+        IrisPackManager.setCurrentShaderpack(IrisPackManager.getShaderpack());
 
         // Reload Iris' Engine
         try {

@@ -23,7 +23,7 @@ public class IrisPackManager {
     public static final String PACKID = "iris";
     public static final Object2IntMap<String> RESOURCE_PACK_PRIORITY_MAP = new Object2IntOpenHashMap<>();
     //Used in Mixin to retain resourcepack/shaderpack layout
-    public static List<ResourcePackProfile> enabledPacks = null;
+    private static List<ResourcePackProfile> enabledPacks = null;
 
     public static List<ResourcePackProfile> getEnabledPacks() {
         return enabledPacks;
@@ -58,7 +58,7 @@ public class IrisPackManager {
         return returnPack;
     }
 
-    private static String getCurrentShaderpack() {
+    public static String getCurrentShaderpack() {
         String prop = "(internal)";
         try {
             FileInputStream in = new FileInputStream(irisConfig.toString());
@@ -73,7 +73,7 @@ public class IrisPackManager {
         return prop;
     }
 
-    public static void setShaderpack(String pack) {
+    public static void setCurrentShaderpack(String pack) {
         try {
             FileInputStream in = new FileInputStream(irisConfig.toString());
             Properties props = new Properties();
@@ -97,13 +97,13 @@ public class IrisPackManager {
     }
 
     @SuppressWarnings({"deprecation"})        //I need exactly this functionality of registerBuiltinResourcePack
-    static void createResourcepack(String pack) {
+    private static void createResourcepack(String pack) {
         FabricLoader.getInstance().getModContainer(IrisExplorerMod.MODID).ifPresent(modContainer -> {
             ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(PACKID + ":" + getPackSubID(pack)), "resourcepacks/shaderpack", modContainer, false);
         });
     }
 
-    static String getPackSubID(String pack) {
+    private static String getPackSubID(String pack) {
         return pack.toLowerCase().replaceAll("\\s+", "-");
     }
 
