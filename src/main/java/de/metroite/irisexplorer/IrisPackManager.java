@@ -16,10 +16,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class IrisPackManager {
     private static final Path shaderpacksDirectory = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
     private static final Path irisConfig = FabricLoader.getInstance().getConfigDir().resolve("iris.properties");
+    public static List<String> registeredPacks;
+    public static List<String> removedPacks;
+
     public static final String PACKID = "iris";
     public static final Object2IntMap<String> RESOURCE_PACK_PRIORITY_MAP = new Object2IntOpenHashMap<>();
     //Used in Mixin to retain resourcepack/shaderpack layout
@@ -35,7 +39,7 @@ public class IrisPackManager {
 
 
 
-    public static List<String> getShaderpackPaths() {
+    private static List<String> getShaderpackPaths() {
         List<String> pathnames;
         File f = new File(shaderpacksDirectory.toString());
         pathnames = Arrays.asList(Objects.requireNonNull(f.list()));
@@ -91,19 +95,28 @@ public class IrisPackManager {
 
     public  static void updateShaderpackList() {
         List<String> packs = getShaderpackPaths();
+
         for (String pack: packs) {
             createResourcepack(pack);
         }
+
+        //register removed packs
+        if (registeredPacks != null && !packs.equals(registeredPacks)) {
+            removedPacks = registeredPacks.stream().filter(pack -> !packs.contains(pack)).collect(Collectors.toList());
+            IrisExplorerMod.LOGGER.info("Removed Shaderpacks: " + removedPacks);
+            IrisExplorerMod.LOGGER.error("Registered Shaderpacks: " + registeredPacks);
+        }
+        //update registered packs
+        registeredPacks = packs;
     }
 
-    @SuppressWarnings({"deprecation"})        //I need exactly this functionality of registerBuiltinResourcePack
     private static void createResourcepack(String pack) {
         FabricLoader.getInstance().getModContainer(IrisExplorerMod.MODID).ifPresent(modContainer -> {
             ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(PACKID + ":" + getPackSubID(pack)), "resourcepacks/shaderpack", modContainer, false);
         });
     }
 
-    private static String getPackSubID(String pack) {
+    public static String getPackSubID(String pack) {
         return pack.toLowerCase().replaceAll("\\s+", "-");
     }
 

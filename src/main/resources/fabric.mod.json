@@ -28,6 +28,11 @@
   "icon": "assets/iris-explorer/icon.png",
 
   "environment": "client",
+  "entrypoints": {
+    "client": [
+      "de.metroite.irisexplorer.IrisExplorerMod"
+    ]
+  },
   "mixins": [
     "iris-explorer.mixins.json"
   ],

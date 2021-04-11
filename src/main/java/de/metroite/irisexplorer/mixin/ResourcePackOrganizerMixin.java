@@ -1,6 +1,5 @@
 package de.metroite.irisexplorer.mixin;
 
-import com.google.common.collect.ImmutableList;
 import de.metroite.irisexplorer.IrisExplorerMod;
 import de.metroite.irisexplorer.IrisPackManager;
 import net.coderbot.iris.Iris;
@@ -22,9 +21,7 @@ import java.util.stream.Stream;
 
 @Mixin(ResourcePackOrganizer.class)
 public abstract class ResourcePackOrganizerMixin {
-    private List<String> rppacks_open;
-    private List<String> sppacks_open;
-    private Boolean screen = false;
+    private List<String> packs_open;
     private Boolean init = false;
 
     @Mutable
@@ -36,39 +33,37 @@ public abstract class ResourcePackOrganizerMixin {
     @Inject(method = "apply", at = @At(value = "HEAD"), cancellable = true)
     private void irisExplorerOnScreenClosed(CallbackInfo ci) {
         //resourcepack priority after any change
-        List<String> packs = irisExplorerGetEnabledPacksAsString();
-        boolean shaderpacksIncluded = irisExplorerHasShaderpacks(packs);
+        List<String> packs_close = irisExplorerGetEnabledPacksAsString();
 
         //Priority Map
         IrisPackManager.RESOURCE_PACK_PRIORITY_MAP.clear();
-        for(int i = 0; i < packs.size(); i++) {
-            IrisPackManager.RESOURCE_PACK_PRIORITY_MAP.put(packs.get(i), packs.size() - i);
+        for(int i = 0; i < packs_close.size(); i++) {
+            IrisPackManager.RESOURCE_PACK_PRIORITY_MAP.put(packs_close.get(i), packs_close.size() - i);
         }
 
-        if (shaderpacksIncluded) {
-            List<String> sppacks_close = irisExplorerFilterOutResourcepacks(packs);
+        List<String> rppacks_open = irisExplorerFilterOutShaderpacks(packs_open);
+        List<String> rppacks_close = irisExplorerFilterOutShaderpacks(packs_close);
 
-            //save current layout
+        if (irisExplorerHasShaderpacks(packs_close)) {
+            List<String> sppacks_open = irisExplorerFilterOutResourcepacks(packs_open);
+            List<String> sppacks_close = irisExplorerFilterOutResourcepacks(packs_close);
+
+            //save current pack layout
             IrisPackManager.setEnabledPacks(this.enabledPacks);
 
-            //cancel reloading shaders nothing was moved
+            //cancel reloading shaders if shaderpacks weren't moved
             if (sppacks_open != null) {
                 if (!sppacks_open.equals(sppacks_close)) {
                     //IrisExplorerMod.LOGGER.info("Switching shaderpack");
                     IrisExplorerMod.reload();
                 }
+
             } else if (sppacks_close != null) {
                 //IrisExplorerMod.LOGGER.info("Switching from internal shader");
                 IrisExplorerMod.reload();
             }
 
-            List<String> rppacks_close = irisExplorerFilterOutShaderpacks(packs);
-            //cancel reloading resources if only shaderpacks were moved
-            if (rppacks_open.equals(rppacks_close)) {
-                IrisExplorerMod.LOGGER.warn("Canceling resource reload");
-
-                ci.cancel();
-            }
+        //no selected shaderpacks -> fallback to internal shaders
         } else if (!IrisPackManager.getCurrentShaderpack().equals("(internal)")) {
             //reload shaderpacks with default
             IrisPackManager.setCurrentShaderpack("(internal)");
@@ -78,23 +73,18 @@ public abstract class ResourcePackOrganizerMixin {
                 IrisExplorerMod.LOGGER.error("Error while reloading Shaders for Iris!", e);
             }
         }
-        //prepare for next call
-        screen = false;
-        init = false;
-    }
 
-    // On ResourcePackScreen Open
-    @Inject(method = "refresh", at = @At(value = "HEAD"))
-    private void irisExplorerOnScreenOpen(CallbackInfo ci) {
-        //we don't want it to refresh everytime
-        if (!screen) {
-            //resourcepack priority before any change
-            List<String> packs = irisExplorerGetEnabledPacksAsString();
-            rppacks_open = irisExplorerFilterOutShaderpacks(packs);
+        //cancel reloading resources if resourcepacks weren't moved
+        if (rppacks_open != null) {
+            if (rppacks_open.equals(rppacks_close)) {
+                IrisExplorerMod.LOGGER.warn("Cancelling resource reload");
 
-            IrisPackManager.updateShaderpackList();
-            screen = true; //once
+                ci.cancel();
+            }
         }
+
+        //prepare for next call
+        init = false;
     }
 
     // Keep Shaderpacks in EnabledPacks
@@ -102,29 +92,62 @@ public abstract class ResourcePackOrganizerMixin {
     private void irisExplorerLoadEnabledPacks(CallbackInfoReturnable<Stream<ResourcePackOrganizer.Pack>> cir) {
         //load saved layout
         if (!init) {
-            List<ResourcePackProfile> savedPacks = IrisPackManager.getEnabledPacks();
-            if (savedPacks != null) {
-                this.enabledPacks = savedPacks;
-                //remove all enabled packs from disable packs list
-                this.disabledPacks.removeAll(savedPacks);
+            //Initial game start, mark previously set shaderpack as enabled
+            if (IrisPackManager.getEnabledPacks() == null) {
+                if (!IrisPackManager.getShaderpack().equals("(internal)")) {
 
-                //save current shaderpack layout (for skip shader reload)
-                sppacks_open = irisExplorerFilterOutResourcepacks(irisExplorerGetEnabledPacksAsString());
+                    List<ResourcePackProfile> init_pack = this.disabledPacks.stream().filter((pack) -> pack.getDisplayName().
+                            getString().equals(IrisPackManager.PACKID + "/" + IrisPackManager.getPackSubID(IrisPackManager.
+                            getShaderpack()))).collect(Collectors.toList());
+
+                    if (init_pack.size() > 0) {
+                        int index = this.disabledPacks.indexOf(init_pack.get(0));
+                        this.enabledPacks.add(0, this.disabledPacks.remove(index));
+                    }
+                }
+                //save initial pack layout (Reloads resources on every initial game start if not available)
+                IrisPackManager.setEnabledPacks(this.enabledPacks);
             }
+
+            //load savedPacks
+            this.enabledPacks = IrisPackManager.getEnabledPacks();
+            //remove all enabled packs from disabled packs list
+            this.disabledPacks.removeAll(IrisPackManager.getEnabledPacks());
+            /*
+            //remove all deleted packs from disabled packs list
+            if (IrisPackManager.removedPacks != null && IrisPackManager.removedPacks.size() > 0) {
+                this.disabledPacks.removeAll(this.disabledPacks.stream().filter((pack) -> {
+                    IrisExplorerMod.LOGGER.error(pack.getDisplayName().getString());
+                    return IrisPackManager.removedPacks.stream().map((rempack) -> {
+                        IrisExplorerMod.LOGGER.error(IrisPackManager.PACKID + "/" + IrisPackManager.getPackSubID(rempack));
+                        return IrisPackManager.PACKID + "/" + IrisPackManager.getPackSubID(rempack);
+                    }).collect(Collectors.toList()).contains(pack.getDisplayName().getString());
+                }).collect(Collectors.toList()));
+            }
+             */
+            //save initial pack layout
+            packs_open = irisExplorerGetEnabledPacksAsString();
+
             init = true; //once
         }
     }
 
     private List<String> irisExplorerGetEnabledPacksAsString() {
-        return this.enabledPacks.stream().map(ResourcePackProfile::getName).collect(ImmutableList.toImmutableList());
+        return this.enabledPacks.stream().map(ResourcePackProfile::getName).collect(Collectors.toList());
     }
 
     private List<String> irisExplorerFilterOutShaderpacks(List<String> packList) {
+        if (packList == null) {
+            return null;
+        }
         List<String> shaderpacks = irisExplorerGetShaderpacks();
         return packList.stream().filter(pack -> !shaderpacks.contains(pack)).collect(Collectors.toList());
     }
 
     private List<String> irisExplorerFilterOutResourcepacks(List<String> packList) {
+        if (packList == null) {
+            return null;
+        }
         List<String> shaderpacks = irisExplorerGetShaderpacks();
         return packList.stream().filter(pack -> shaderpacks.contains(pack)).collect(Collectors.toList());
     }
@@ -145,6 +168,6 @@ public abstract class ResourcePackOrganizerMixin {
     }
 
     private List<String> irisExplorerGetShaderpacks() {
-        return IrisPackManager.getShaderpackPaths().stream().map(spack -> IrisPackManager.PACKID + "/" + spack.toLowerCase().replaceAll("\\s+", "-")).collect(Collectors.toList());
+        return IrisPackManager.registeredPacks.stream().map(spack -> IrisPackManager.PACKID + "/" + IrisPackManager.getPackSubID(spack)).collect(Collectors.toList());
     }
 }
