@@ -30,7 +30,6 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "de.metroite.irisexplorer.IrisExplorerMod"
     ]
   },
   "mixins": [

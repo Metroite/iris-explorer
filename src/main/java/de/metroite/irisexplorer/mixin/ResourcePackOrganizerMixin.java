@@ -87,6 +87,13 @@ public abstract class ResourcePackOrganizerMixin {
         init = false;
     }
 
+    @Inject(method = "refresh", at = @At(value = "HEAD"))
+    private void irisExplorerOnScreenOpen(CallbackInfo ci) {
+        if (!init) {
+            IrisPackManager.updateShaderpackList();
+        }
+    }
+
     // Keep Shaderpacks in EnabledPacks
     @Inject(method = "getEnabledPacks", at = @At(value = "HEAD"))
     private void irisExplorerLoadEnabledPacks(CallbackInfoReturnable<Stream<ResourcePackOrganizer.Pack>> cir) {
